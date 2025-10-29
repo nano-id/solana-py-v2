@@ -349,8 +349,17 @@ async def get_root():
                 const mintDiv = document.createElement('div');
                 mintDiv.className = 'mint-item';
                 mintDiv.dataset.timestamp = Date.now(); // Eklenme zamanı
+                
+                // Solscan URL'si oluştur
+                const solscanUrl = `https://solscan.io/token/${mintData.mint}`;
+                
                 mintDiv.innerHTML = `
-                    <div class="mint-address">${mintData.mint}</div>
+                    <a href="${solscanUrl}" target="_blank" style="text-decoration: none; color: inherit;">
+                        <div class="mint-address" style="cursor: pointer; color: #1e3c72; text-decoration: none;">
+                            ${mintData.mint}
+                            <span style="margin-left: 8px; font-size: 0.8em; color: #2a5298;">🔗</span>
+                        </div>
+                    </a>
                     <div style="color: #666; font-size: 0.85em; margin-top: 5px;">
                         ${new Date(mintData.foundAt).toLocaleString('tr-TR')}
                     </div>
@@ -393,8 +402,11 @@ async def get_root():
             
             // Test için mock mint'ler (gerçek Solana bağlantısı için kaldırın)
             function addTestMint() {
+                // Gerçek Solana mint adresi formatı (44 karakter)
+                const randomPart = Math.random().toString(36).substring(2, 15);
+                const randomPart2 = Math.random().toString(36).substring(2, 15);
                 const testMint = {
-                    mint: 'Test' + Math.random().toString(36).substring(7) + '...' + Math.random().toString(36).substring(7),
+                    mint: randomPart + randomPart2 + 'A' + randomPart2.substring(0, 14), // ~44 karakter
                     foundAt: new Date().toISOString(),
                     age: 0.3 // 0.3 saniye (0.6'dan genç)
                 };

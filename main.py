@@ -348,6 +348,7 @@ async def get_root():
                 const mintList = document.getElementById('mintList');
                 const mintDiv = document.createElement('div');
                 mintDiv.className = 'mint-item';
+                mintDiv.dataset.timestamp = Date.now(); // Eklenme zamanı
                 mintDiv.innerHTML = `
                     <div class="mint-address">${mintData.mint}</div>
                     <div style="color: #666; font-size: 0.85em; margin-top: 5px;">
@@ -355,6 +356,21 @@ async def get_root():
                     </div>
                 `;
                 mintList.insertBefore(mintDiv, mintList.firstChild);
+                
+                // 10 saniye sonra sil
+                setTimeout(() => {
+                    if (mintDiv.parentNode) {
+                        mintDiv.remove();
+                        updateStats();
+                    }
+                }, 10000);
+            }
+            
+            // İstatistikleri güncelle
+            function updateStats() {
+                const mintList = document.getElementById('mintList');
+                const visibleCount = mintList.children.length;
+                document.getElementById('freshMints').textContent = visibleCount;
             }
             
             // API'den mevcut mint'leri çek
@@ -373,6 +389,17 @@ async def get_root():
                 } catch (error) {
                     console.error('Mint yüklenemedi:', error);
                 }
+            }
+            
+            // Test için mock mint'ler (gerçek Solana bağlantısı için kaldırın)
+            function addTestMint() {
+                const testMint = {
+                    mint: 'Test' + Math.random().toString(36).substring(7) + '...' + Math.random().toString(36).substring(7),
+                    foundAt: new Date().toISOString(),
+                    age: 0.3 // 0.3 saniye (0.6'dan genç)
+                };
+                addMint(testMint);
+                addLog('Yeni mint eklendi: ' + testMint.mint.substring(0, 15) + '...', 'success');
             }
             
             // Log window toggle
@@ -412,6 +439,11 @@ async def get_root():
                 loadMints();
                 connectWebSocket();
                 addLog('WebSocket bağlantısı kuruluyor...', 'info');
+                
+                // Test için her 3 saniyede bir mock mint ekle (gerçek bağlantıda kaldırın)
+                setInterval(() => {
+                    addTestMint();
+                }, 3000);
             });
         </script>
     </body>

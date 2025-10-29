@@ -12,6 +12,7 @@ app = FastAPI()
 # Solana tracking variables
 tracked_mints: Dict[str, Dict] = {}
 websocket_clients: Set[WebSocket] = set()
+log_buffer: List[Dict] = []  # Initialize log buffer
 
 # Static dosyaları servis et
 try:
@@ -422,6 +423,13 @@ async def get_root():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     websocket_clients.add(websocket)
+    
+    # İlk bağlantıda bir hoş geldin mesajı gönder
+    await websocket.send_json({"type": "log", "data": {
+        "timestamp": datetime.now().isoformat(),
+        "message": "WebSocket bağlandı! ✅",
+        "type": "success"
+    }})
     
     try:
         while True:

@@ -400,13 +400,20 @@ async def get_root():
                 }
             }
             
-            // Test için mock mint'ler (gerçek Solana bağlantısı için kaldırın)
+            // Test için mock mint'ler (gerçek Solana mint adresleri)
             function addTestMint() {
-                // Gerçek Solana mint adresi formatı (44 karakter)
-                const randomPart = Math.random().toString(36).substring(2, 15);
-                const randomPart2 = Math.random().toString(36).substring(2, 15);
+                // Bilinen gerçek token mint adresleri (test için)
+                const realTokens = [
+                    'So11111111111111111111111111111111111111112', // Wrapped SOL
+                    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+                    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+                    'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL
+                    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' // Bonk (BONK)
+                ];
+                
+                const randomIndex = Math.floor(Math.random() * realTokens.length);
                 const testMint = {
-                    mint: randomPart + randomPart2 + 'A' + randomPart2.substring(0, 14), // ~44 karakter
+                    mint: realTokens[randomIndex],
                     foundAt: new Date().toISOString(),
                     age: 0.3 // 0.3 saniye (0.6'dan genç)
                 };
@@ -452,10 +459,10 @@ async def get_root():
                 connectWebSocket();
                 addLog('WebSocket bağlantısı kuruluyor...', 'info');
                 
-                // Test için her 3 saniyede bir mock mint ekle (gerçek bağlantıda kaldırın)
+                // Test için her 5 saniyede bir gerçek token ekle (gerçek bağlantıda kaldırın)
                 setInterval(() => {
                     addTestMint();
-                }, 3000);
+                }, 5000);
             });
         </script>
     </body>

@@ -1,0 +1,17 @@
+# Render.com configuration file
+# This file helps Render understand your project structure
+
+services:
+  - type: web
+    name: solana-py-v2
+    runtime: python
+    plan: free  # or starter/standard for more resources
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: PYTHONUNBUFFERED
+        value: 1
+    healthCheckPath: /health
+

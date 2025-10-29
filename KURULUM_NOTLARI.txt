@@ -1,0 +1,45 @@
+======================================================
+NODE.JS KURULUMUNDAN SONRA YAPMANIZ GEREKENLER
+======================================================
+
+ONEMLI: Kurulum tamamlandi, ama sistem henuz Node.js'i gormuyor!
+
+1. MEVCUT POWERShell'i KAPATIN
+2. YENI BIR PowerShell ACIN
+3. start.bat dosyasini calistirin
+
+NEDEN?
+------
+Windows, kurulumdan sonra PATH'i guncelliyor
+ama sadece YENI acilan programlarda aktif olur.
+Eski pencerelerde calismaz!
+
+ALTERNATIF TEST:
+-----------------
+Yeni PowerShell acip su komutu yazin:
+node --version
+
+Eger versiyon numarasi gorurseniz (orn: v20.x.x),
+Node.js basariyla kurulmustur!
+
+SONRA:
+------
+start.bat dosyasini calistirin.
+Otomatik olarak:
+1. Modulleri yukleyecek (npm install)
+2. Sunucuyu baslatacak
+3. Tarayicinizda http://localhost:3000 acilacak
+
+======================================================
+HAZIRLAYAN: Solana Mint Tracker v1.0
+======================================================
+
+
+
+
+
+
+
+
+
+

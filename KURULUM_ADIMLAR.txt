@@ -1,0 +1,77 @@
+==============================================
+SOLANA MINT TRACKER - KURULUM TALIMATLAR
+==============================================
+
+1. NODE.JS KURULUMU (ZORUNLU)
+==============================================
+
+Node.js kurulu degilse, asagidaki adimlari izleyin:
+
+a) NODE_KUR.bat dosyasini calistirin
+b) Tarayicinizda Node.js indirme sayfasi acilacak
+c) "LTS" secenegini indirin (ornek: node-v20.x.x-x64.msi)
+d) Indirilen .msi dosyasini calistirin
+e) "Next" butonuna tiklayarak kurulumu tamamlayin
+f) Kurulum bitince PowerShell/tarayiciyi kapatin
+g) Tekrar acin
+
+KONTROL:
+---------
+Yeni PowerShell acip su komutu calistirin:
+node --version
+
+Eger bir versiyon numarasi gorurseniz (ornek: v20.x.x), 
+Node.js basariyla kurulmustur!
+
+
+2. PROJEYI CALISTIRMA
+==============================================
+
+Node.js kurulduktan sonra:
+
+a) start.bat dosyasina cift tiklayin
+b) Otomatik olarak tum gerekli moduller yuklenecek
+c) Sunucu http://localhost:3000 adresinde baslayacak
+d) Tarayicinizda bu adresi acin
+
+NOTLAR:
+-------
+- Ilk calistirmada "npm install" biraz zaman alabilir
+- Web arayuzu: http://localhost:3000
+- Sunucuyu durdurmak icin: CTRL+C tuslarina basin
+
+
+3. SORUN GIDERME
+==============================================
+
+Problem: "node komut bulunamadi"
+Cozum: Node.js kurun (NODE_KUR.bat)
+
+Problem: "npm install hata veriyor"
+Cozum: Internet baglantinizi kontrol edin
+
+Problem: "Port 3000 kullaniliyor"
+Cozum: app.js dosyasinda PORT degiskenini degistirin
+
+Problem: "Mint bulunamadi"
+Cozum: Sistem Solana loglarini dinliyor, biraz bekleyin
+
+
+4. DESTEK
+==============================================
+
+Detayli bilgi icin KURULUM.md dosyasina bakin.
+
+==============================================
+HAZIRLAYAN: Solana Mint Tracker v1.0
+==============================================
+
+
+
+
+
+
+
+
+
+

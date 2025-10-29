@@ -400,25 +400,31 @@ async def get_root():
                 }
             }
             
-            // Test için mock mint'ler (gerçek Solana mint adresleri)
+            // Test için mock mint'ler - SADECE 0.6 SANİYEDEN GENÇ OLANLAR
             function addTestMint() {
-                // Bilinen gerçek token mint adresleri (test için)
-                const realTokens = [
-                    'So11111111111111111111111111111111111111112', // Wrapped SOL
-                    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-                    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-                    'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL
-                    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' // Bonk (BONK)
-                ];
+                // Rastgele solana mint adresi oluştur (test için)
+                const randomChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789';
+                let mintAddress = '';
+                for (let i = 0; i < 44; i++) {
+                    mintAddress += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+                }
                 
-                const randomIndex = Math.floor(Math.random() * realTokens.length);
+                // Rastgele yaş oluştur (0.1 - 0.5 saniye arası - 0.6'dan genç olmalı)
+                const randomAge = Math.random() * 0.5 + 0.1; // 0.1 ile 0.6 arası
+                
                 const testMint = {
-                    mint: realTokens[randomIndex],
+                    mint: mintAddress,
                     foundAt: new Date().toISOString(),
-                    age: 0.3 // 0.3 saniye (0.6'dan genç)
+                    age: randomAge // 0.6'dan genç olduğundan gösterilecek
                 };
-                addMint(testMint);
-                addLog('Yeni mint eklendi: ' + testMint.mint.substring(0, 15) + '...', 'success');
+                
+                // Sadece 0.6 saniyeden genç olanları ekle
+                if (testMint.age < 0.6) {
+                    addMint(testMint);
+                    addLog('✅ Yeni fresh mint bulundu! (yaş: ' + testMint.age.toFixed(3) + 's)', 'success');
+                } else {
+                    addLog('⏭️ Eski mint atlandı (yaş: ' + testMint.age.toFixed(3) + 's)', 'warning');
+                }
             }
             
             // Log window toggle

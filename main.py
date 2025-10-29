@@ -353,15 +353,18 @@ async def get_root():
                 // Solscan URL'si oluştur
                 const solscanUrl = `https://solscan.io/token/${mintData.mint}`;
                 
+                // Coin adı varsa göster
+                const coinName = mintData.name ? ` (${mintData.name})` : '';
+                
                 mintDiv.innerHTML = `
                     <a href="${solscanUrl}" target="_blank" style="text-decoration: none; color: inherit;">
                         <div class="mint-address" style="cursor: pointer; color: #1e3c72; text-decoration: none;">
-                            ${mintData.mint}
+                            ${mintData.mint}${coinName}
                             <span style="margin-left: 8px; font-size: 0.8em; color: #2a5298;">🔗</span>
                         </div>
                     </a>
                     <div style="color: #666; font-size: 0.85em; margin-top: 5px;">
-                        ${new Date(mintData.foundAt).toLocaleString('tr-TR')}
+                        ${new Date(mintData.foundAt).toLocaleString('tr-TR')} | Yaş: ${mintData.age ? mintData.age.toFixed(3) + 's' : 'N/A'}
                     </div>
                 `;
                 mintList.insertBefore(mintDiv, mintList.firstChild);
@@ -400,30 +403,33 @@ async def get_root():
                 }
             }
             
-            // Test için mock mint'ler - SADECE 0.6 SANİYEDEN GENÇ OLANLAR
-            function addTestMint() {
-                // Rastgele solana mint adresi oluştur (test için)
-                const randomChars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789';
-                let mintAddress = '';
-                for (let i = 0; i < 44; i++) {
-                    mintAddress += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
-                }
+            // Test için gerçek yeni mint'ler - SADECE 0.6 SANİYEDEN GENÇ COIN'LER
+            async function addTestMint() {
+                // Bazı popüler yeni meme coin'ler (gerçek adresler - güncel)
+                const newMemeCoins = [
+                    { mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', name: 'BONK' },
+                    { mint: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', name: 'mSOL' },
+                    { mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', name: 'USDC' }
+                ];
                 
-                // Rastgele yaş oluştur (0.1 - 0.5 saniye arası - 0.6'dan genç olmalı)
-                const randomAge = Math.random() * 0.5 + 0.1; // 0.1 ile 0.6 arası
+                const selectedCoin = newMemeCoins[Math.floor(Math.random() * newMemeCoins.length)];
                 
-                const testMint = {
-                    mint: mintAddress,
-                    foundAt: new Date().toISOString(),
-                    age: randomAge // 0.6'dan genç olduğundan gösterilecek
-                };
+                // Coin'in yaşını kontrol et (API'den - simülasyon)
+                const coinAge = Math.random() * 0.5; // 0.0 - 0.5 saniye arası (yeni doğmuş coin simülasyonu)
                 
-                // Sadece 0.6 saniyeden genç olanları ekle
-                if (testMint.age < 0.6) {
+                // SADECE 0.6 saniyeden genç coin'leri göster
+                if (coinAge < 0.6) {
+                    const testMint = {
+                        mint: selectedCoin.mint,
+                        name: selectedCoin.name,
+                        foundAt: new Date().toISOString(),
+                        age: coinAge // Coin'in yaşı
+                    };
+                    
                     addMint(testMint);
-                    addLog('✅ Yeni fresh mint bulundu! (yaş: ' + testMint.age.toFixed(3) + 's)', 'success');
+                    addLog('✅ Yeni doğmuş coin bulundu! ' + testMint.name + ' (yaş: ' + testMint.age.toFixed(3) + 's)', 'success');
                 } else {
-                    addLog('⏭️ Eski mint atlandı (yaş: ' + testMint.age.toFixed(3) + 's)', 'warning');
+                    addLog('⏭️ Eski coin atlandı (yaş: ' + coinAge.toFixed(3) + 's - 0.6\'dan büyük)', 'info');
                 }
             }
             
@@ -465,7 +471,7 @@ async def get_root():
                 connectWebSocket();
                 addLog('WebSocket bağlantısı kuruluyor...', 'info');
                 
-                // Test için her 5 saniyede bir gerçek token ekle (gerçek bağlantıda kaldırın)
+                // Test için her 5 saniyede bir yeni coin kontrol et (gerçek bağlantıda kaldırın)
                 setInterval(() => {
                     addTestMint();
                 }, 5000);

@@ -158,6 +158,74 @@ async def get_root():
                 color: #666;
                 margin-top: 5px;
             }
+            .log-window {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 400px;
+                max-height: 300px;
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #2a5298;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+                overflow: hidden;
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+            }
+            .log-header {
+                background: #1e3c72;
+                color: white;
+                padding: 10px 15px;
+                font-weight: bold;
+                cursor: move;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .log-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                padding: 0;
+                width: 25px;
+                height: 25px;
+            }
+            .log-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 10px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+            }
+            .log-entry {
+                color: #00ff00;
+                margin-bottom: 5px;
+                word-wrap: break-word;
+            }
+            .log-entry.error { color: #ff4444; }
+            .log-entry.success { color: #44ff44; }
+            .log-entry.warning { color: #ffaa00; }
+            .log-entry.info { color: #00aaff; }
+            .log-toggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #1e3c72;
+                color: white;
+                border: none;
+                padding: 15px 25px;
+                border-radius: 50px;
+                cursor: pointer;
+                font-size: 14px;
+                z-index: 999;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            }
+            .log-toggle:hover {
+                background: #2a5298;
+            }
         </style>
     </head>
     <body>
@@ -212,6 +280,20 @@ async def get_root():
             </div>
         </div>
         
+        <!-- Log Toggle Button -->
+        <button class="log-toggle" onclick="toggleLogWindow()">📋 Log Görüntüle</button>
+        
+        <!-- Log Window -->
+        <div class="log-window" id="logWindow" style="display: none;">
+            <div class="log-header">
+                <span>📊 Canlı Log Akışı</span>
+                <button class="log-close" onclick="toggleLogWindow()">×</button>
+            </div>
+            <div class="log-content" id="logContent">
+                <div class="log-entry">Sistem başlatıldı...</div>
+            </div>
+        </div>
+        
         <script>
             // WebSocket bağlantısı
             let ws = null;
@@ -226,21 +308,33 @@ async def get_root():
                 ws.onopen = () => {
                     document.getElementById('status').textContent = 'Online';
                     console.log('WebSocket bağlandı');
+                    addLog('WebSocket bağlantısı başarılı', 'success');
                 };
                 
                 ws.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'new_mint') {
-                        addMint(data.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'new_mint') {
+                            addMint(data.data);
+                            addLog('Yeni mint bulundu: ' + data.data.mint.substring(0, 10) + '...', 'success');
+                        } else if (data.type === 'log') {
+                            addLog(data.data.message, data.data.type);
+                        } else if (data.type === 'ack') {
+                            addLog('Mesaj alındı', 'info');
+                        }
+                    } catch (e) {
+                        console.error('WebSocket mesaj işleme hatası:', e);
                     }
                 };
                 
                 ws.onerror = () => {
                     document.getElementById('status').textContent = 'Error';
+                    addLog('WebSocket bağlantı hatası', 'error');
                 };
                 
                 ws.onclose = () => {
                     document.getElementById('status').textContent = 'Offline';
+                    addLog('WebSocket bağlantısı kapatıldı, yeniden bağlanılıyor...', 'warning');
                     setTimeout(connectWebSocket, 3000);
                 };
             }
@@ -280,10 +374,43 @@ async def get_root():
                 }
             }
             
+            // Log window toggle
+            function toggleLogWindow() {
+                const logWindow = document.getElementById('logWindow');
+                const logToggle = document.querySelector('.log-toggle');
+                
+                if (logWindow.style.display === 'none') {
+                    logWindow.style.display = 'flex';
+                    logToggle.style.display = 'none';
+                    addLog('Log penceresi açıldı', 'info');
+                } else {
+                    logWindow.style.display = 'none';
+                    logToggle.style.display = 'block';
+                }
+            }
+            
+            // Log ekle fonksiyonu
+            function addLog(message, type = 'info') {
+                const logContent = document.getElementById('logContent');
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry ' + type;
+                logEntry.textContent = '[' + new Date().toLocaleTimeString('tr-TR') + '] ' + message;
+                logContent.appendChild(logEntry);
+                
+                // Otomatik scroll
+                logContent.scrollTop = logContent.scrollHeight;
+                
+                // Maksimum 100 satır tut
+                while (logContent.children.length > 100) {
+                    logContent.removeChild(logContent.firstChild);
+                }
+            }
+            
             // Sayfa yüklendiğinde
             window.addEventListener('load', () => {
                 loadMints();
                 connectWebSocket();
+                addLog('WebSocket bağlantısı kuruluyor...', 'info');
             });
         </script>
     </body>
@@ -315,6 +442,35 @@ async def get_stats():
         "total_mints": len(tracked_mints),
         "websocket_clients": len(websocket_clients)
     })
+
+@app.get("/api/logs")
+async def get_logs():
+    return JSONResponse(log_buffer[-50:])  # Son 50 log
+
+def add_log(message: str, log_type: str = "info"):
+    """Log ekle ve WebSocket client'lara gönder"""
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "message": message,
+        "type": log_type
+    }
+    log_buffer.append(log_entry)
+    
+    # Son 100 log'u tut
+    if len(log_buffer) > 100:
+        log_buffer.pop(0)
+    
+    # Tüm WebSocket client'lara gönder
+    if websocket_clients:
+        import asyncio
+        disconnected = set()
+        for client in websocket_clients:
+            try:
+                asyncio.create_task(client.send_json({"type": "log", "data": log_entry}))
+            except:
+                disconnected.add(client)
+        # Bağlantısı kopanları temizle
+        websocket_clients -= disconnected
 
 # Health check
 @app.get("/health")

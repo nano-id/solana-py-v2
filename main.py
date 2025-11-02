@@ -1,24 +1,36 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import json
 import asyncio
+import os
 from datetime import datetime
 from typing import Set, Dict, List
 
-app = FastAPI()
+app = FastAPI(title="Solana Mint Tracker", version="1.0.0")
+
+# CORS middleware - Render için gerekli
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Solana tracking variables
 tracked_mints: Dict[str, Dict] = {}
 websocket_clients: Set[WebSocket] = set()
 log_buffer: List[Dict] = []  # Initialize log buffer
 
-# Static dosyaları servis et
-try:
-    app.mount("/static", StaticFiles(directory="public"), name="static")
-except:
-    pass
+# Static dosyaları servis et (public klasörü varsa)
+if os.path.exists("public"):
+    try:
+        app.mount("/static", StaticFiles(directory="public"), name="static")
+    except Exception as e:
+        print(f"Static files mount edilemedi: {e}")
 
 # Ana sayfa - MAVI TEMA
 @app.get("/", response_class=HTMLResponse)
@@ -348,41 +360,13 @@ async def get_root():
                 const mintList = document.getElementById('mintList');
                 const mintDiv = document.createElement('div');
                 mintDiv.className = 'mint-item';
-                mintDiv.dataset.timestamp = Date.now(); // Eklenme zamanı
-                
-                // Solscan URL'si oluştur
-                const solscanUrl = `https://solscan.io/token/${mintData.mint}`;
-                
-                // Coin adı varsa göster
-                const coinName = mintData.name ? ` (${mintData.name})` : '';
-                
                 mintDiv.innerHTML = `
-                    <a href="${solscanUrl}" target="_blank" style="text-decoration: none; color: inherit;">
-                        <div class="mint-address" style="cursor: pointer; color: #1e3c72; text-decoration: none;">
-                            ${mintData.mint}${coinName}
-                            <span style="margin-left: 8px; font-size: 0.8em; color: #2a5298;">🔗</span>
-                        </div>
-                    </a>
+                    <div class="mint-address">${mintData.mint}</div>
                     <div style="color: #666; font-size: 0.85em; margin-top: 5px;">
-                        ${new Date(mintData.foundAt).toLocaleString('tr-TR')} | Yaş: ${mintData.age ? mintData.age.toFixed(3) + 's' : 'N/A'}
+                        ${new Date(mintData.foundAt).toLocaleString('tr-TR')}
                     </div>
                 `;
                 mintList.insertBefore(mintDiv, mintList.firstChild);
-                
-                // 10 saniye sonra sil
-                setTimeout(() => {
-                    if (mintDiv.parentNode) {
-                        mintDiv.remove();
-                        updateStats();
-                    }
-                }, 10000);
-            }
-            
-            // İstatistikleri güncelle
-            function updateStats() {
-                const mintList = document.getElementById('mintList');
-                const visibleCount = mintList.children.length;
-                document.getElementById('freshMints').textContent = visibleCount;
             }
             
             // API'den mevcut mint'leri çek
@@ -400,36 +384,6 @@ async def get_root():
                     }
                 } catch (error) {
                     console.error('Mint yüklenemedi:', error);
-                }
-            }
-            
-            // Test için gerçek yeni mint'ler - SADECE 0.6 SANİYEDEN GENÇ COIN'LER
-            async function addTestMint() {
-                // Bazı popüler yeni meme coin'ler (gerçek adresler - güncel)
-                const newMemeCoins = [
-                    { mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', name: 'BONK' },
-                    { mint: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', name: 'mSOL' },
-                    { mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', name: 'USDC' }
-                ];
-                
-                const selectedCoin = newMemeCoins[Math.floor(Math.random() * newMemeCoins.length)];
-                
-                // Coin'in yaşını kontrol et (API'den - simülasyon)
-                const coinAge = Math.random() * 0.5; // 0.0 - 0.5 saniye arası (yeni doğmuş coin simülasyonu)
-                
-                // SADECE 0.6 saniyeden genç coin'leri göster
-                if (coinAge < 0.6) {
-                    const testMint = {
-                        mint: selectedCoin.mint,
-                        name: selectedCoin.name,
-                        foundAt: new Date().toISOString(),
-                        age: coinAge // Coin'in yaşı
-                    };
-                    
-                    addMint(testMint);
-                    addLog('✅ Yeni doğmuş coin bulundu! ' + testMint.name + ' (yaş: ' + testMint.age.toFixed(3) + 's)', 'success');
-                } else {
-                    addLog('⏭️ Eski coin atlandı (yaş: ' + coinAge.toFixed(3) + 's - 0.6\'dan büyük)', 'info');
                 }
             }
             
@@ -470,11 +424,6 @@ async def get_root():
                 loadMints();
                 connectWebSocket();
                 addLog('WebSocket bağlantısı kuruluyor...', 'info');
-                
-                // Test için her 5 saniyede bir yeni coin kontrol et (gerçek bağlantıda kaldırın)
-                setInterval(() => {
-                    addTestMint();
-                }, 5000);
             });
         </script>
     </body>
@@ -518,8 +467,8 @@ async def get_stats():
 async def get_logs():
     return JSONResponse(log_buffer[-50:])  # Son 50 log
 
-def add_log(message: str, log_type: str = "info"):
-    """Log ekle ve WebSocket client'lara gönder"""
+async def add_log_async(message: str, log_type: str = "info"):
+    """Log ekle ve WebSocket client'lara gönder (async)"""
     log_entry = {
         "timestamp": datetime.now().isoformat(),
         "message": message,
@@ -533,15 +482,36 @@ def add_log(message: str, log_type: str = "info"):
     
     # Tüm WebSocket client'lara gönder
     if websocket_clients:
-        import asyncio
         disconnected = set()
         for client in websocket_clients:
             try:
-                asyncio.create_task(client.send_json({"type": "log", "data": log_entry}))
-            except:
+                await client.send_json({"type": "log", "data": log_entry})
+            except Exception as e:
+                print(f"WebSocket gönderme hatası: {e}")
                 disconnected.add(client)
         # Bağlantısı kopanları temizle
         websocket_clients -= disconnected
+    
+    return log_entry
+
+def add_log(message: str, log_type: str = "info"):
+    """Log ekle (sync wrapper - async'i tetikle)"""
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "message": message,
+        "type": log_type
+    }
+    log_buffer.append(log_entry)
+    
+    # Son 100 log'u tut
+    if len(log_buffer) > 100:
+        log_buffer.pop(0)
+    
+    # Async gönderimi background task olarak başlat
+    if websocket_clients:
+        asyncio.create_task(add_log_async(message, log_type))
+    
+    return log_entry
 
 # Health check
 @app.get("/health")
@@ -564,6 +534,5 @@ async def get_status():
     }
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

@@ -63,3 +63,4 @@ Bu bilgileri aldıktan sonra:
 
 **Ama önce bu bilgilere ihtiyacım var!** 🎯
 
+

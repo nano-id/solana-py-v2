@@ -63,7 +63,7 @@ async def get_root():
                 margin: 0 auto;
             }
             h1 {
-                color: #1e3c72;
+                color: #000000;
                 font-size: 2.5em;
                 margin-bottom: 20px;
                 text-align: center;
